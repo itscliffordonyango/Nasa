@@ -1,10 +1,10 @@
-# Astronomical App using NASA API – Astronomy Picture of the Day (APOD)
+#  SpaceScholar - APOD Viewer
+
 
 ---
+### Project Overview
 
-## Project Overview
-
-The **Astronomical App using NASA API** is a modern web application that allows users to explore the **Astronomy Picture of the Day (APOD)** provided by NASA. The app fetches daily space images or videos, along with descriptions and copyright information, allowing users to immerse themselves in the wonders of the universe.
+The SpaceScholar is a modern web application that allows users to explore the Astronomy Picture of the Day (APOD) provided by NASA. The app fetches daily space images or videos, along with descriptions and copyright information, allowing users to immerse themselves in the wonders of the universe.
 
 This project is ideal for astronomy enthusiasts, students, educators, and anyone passionate about exploring space.
 
@@ -12,16 +12,16 @@ This project is ideal for astronomy enthusiasts, students, educators, and anyone
 
 - Display NASA’s APOD dynamically.  
 - Allow users to select a specific date to view images/videos.  
-- Provide a **random APOD feature** to explore interesting astronomical content.  
-- Include a **download button** for images.  
-- Offer an **immersive UI** with background space video and a modern 3D card layout.  
+- Provide a andom APOD feature** to explore interesting astronomical content.  
+- Include a download button** for images.  
+- Offer an immersive UI** with background space video and a modern 3D card layout.  
 
 ---
 
 ## Live Demo
 
 You can try the live version of this project here:  
-[**View Live Demo**](https://yourdomain.com) *(Replace with your actual hosted URL)*
+View Live Demo https://itscliffordonyango.github.io/Nasa/
 
 ---
 
