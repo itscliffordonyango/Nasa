@@ -19,8 +19,126 @@
   opacity: 0.6; /* Dim slightly for readability */
 }
 
+/* Floating Chatbot Icon */
+      #chatbot-icon {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 70px;
+        height: 70px;
+        background-color: #0b3d91;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s ease;
+        z-index: 1000;
+      }
 
+      #chatbot-icon:hover {
+        background-color: #1f5fe0;
+        transform: scale(1.1);
+      }
 
+      /* Chatbot Container */
+      #chatbot-container {
+        display: none;
+        flex-direction: column;
+        position: fixed;
+        bottom: 110px;
+        right: 30px;
+        width: 350px;
+        height: 450px;
+        background-color: #16213e;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        z-index: 999;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      #chatbot-messages {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .bot,
+      .user {
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 20px;
+        animation: bubble 0.3s ease-in-out;
+      }
+
+      .bot {
+        background-color: #0b3d91;
+        align-self: flex-start;
+      }
+
+      .user {
+        background-color: #45a29e;
+        align-self: flex-end;
+      }
+
+      @keyframes bubble {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      #chatbot-input-container {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #0b3d91;
+        background-color: #1f2833;
+      }
+
+      #chatbot-input {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 20px;
+        outline: none;
+        background-color: #0b0c10;
+        color: #fff;
+      }
+
+      #chatbot-send {
+        background-color: #0b3d91;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        margin-left: 8px;
+        cursor: pointer;
+        color: white;
+      }
+
+      
 
     .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
     .option { transition: all .18s ease; }
@@ -116,6 +234,18 @@
       </div>
     </aside>
   </main>
+
+  <!-- Floating Chatbot -->
+    <div id="chatbot-icon">💬</div>
+
+    <div id="chatbot-container">
+      <div id="chatbot-messages"></div>
+      <div id="chatbot-input-container">
+        <input type="text" id="chatbot-input" placeholder="Ask about space..." />
+        <button id="chatbot-send">➤</button>
+      </div>
+    </div>
+
 
   <footer class="py-8 text-center text-slate-500">
     © SpaceScholar Learning 
@@ -499,5 +629,139 @@
       }, 250);
     })();
   </script>
+<!-- chatbot -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const icon = document.getElementById("chatbot-icon");
+    const container = document.getElementById("chatbot-container");
+    const input = document.getElementById("chatbot-input");
+    const send = document.getElementById("chatbot-send");
+    const messages = document.getElementById("chatbot-messages");
+
+    let apodData = {};
+    let chatHistory = [];
+
+    // Toggle chatbot visibility
+    icon.addEventListener("click", () => {
+      container.style.display =
+        container.style.display === "flex" ? "none" : "flex";
+    });
+
+    // Fetch NASA APOD
+    fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
+      .then((res) => res.json())
+      .then((data) => {
+        apodData = data;
+        appendMessage(
+          "bot",
+          `👋 Hi! I'm EduBot. Today's NASA APOD is <b>${data.title}</b>. 
+          Ask me about this picture, Mars, or any astronomy topic!`
+        );
+      })
+      .catch((err) => console.error("NASA API error:", err));
+
+    // Handle chat send
+    send.addEventListener("click", handleMessage);
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleMessage();
+    });
+
+    function handleMessage() {
+      const userText = input.value.trim();
+      if (!userText) return;
+      appendMessage("user", userText);
+      input.value = "";
+      generateResponse(userText);
+    }
+
+    async function generateResponse(userText) {
+      simulateTyping();
+
+      let response = "";
+
+      // APOD-based responses
+      if (/today|apod|picture|image/i.test(userText)) {
+        response = `🪐 Today's APOD is <b>${apodData.title}</b> — ${apodData.explanation.slice(
+          0,
+          280
+        )}...`;
+      }
+
+      // Basic space knowledge
+      const knowledge = {
+        "crab nebula":
+          "The Crab Nebula is the remnant of a supernova that exploded in 1054 AD. It's located in the Taurus constellation and contains a rapidly spinning neutron star called the Crab Pulsar.",
+        mars:
+          "Mars is known as the Red Planet due to its iron-rich dust. It has seasons, polar ice caps, and the tallest volcano in the solar system, Olympus Mons.",
+        jupiter:
+          "Jupiter is the largest planet in our solar system, famous for its Great Red Spot — a massive storm that’s been raging for centuries.",
+        saturn:
+          "Saturn’s rings are made of ice and rock fragments. It has over 80 moons, with Titan being the largest and one of the most Earth-like.",
+      };
+
+      const key = Object.keys(knowledge).find((k) =>
+        userText.toLowerCase().includes(k)
+      );
+      if (!response && key) {
+        response = knowledge[key];
+      }
+
+      // Try a quick web search if no local answer
+      if (!response) {
+        response = await fetchDuckDuckGo(userText);
+      }
+
+      removeTyping();
+      appendMessage(
+        "bot",
+        response ||
+          "I couldn't find a clear answer right now 🌌, but you can check NASA.gov for more!"
+      );
+    }
+
+    // Web search fallback (DuckDuckGo Instant Answer API)
+    async function fetchDuckDuckGo(query) {
+      try {
+        const res = await fetch(
+          `https://api.duckduckgo.com/?q=${encodeURIComponent(
+            query + " astronomy site:nasa.gov"
+          )}&format=json`
+        );
+        const data = await res.json();
+        return (
+          data.AbstractText ||
+          data.RelatedTopics?.[0]?.Text ||
+          ""
+        );
+      } catch (e) {
+        return "";
+      }
+    }
+
+    // Chat visuals
+    function appendMessage(sender, text) {
+      const div = document.createElement("div");
+      div.className = sender;
+      div.innerHTML = text.replace(/\n/g, "<br>");
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function simulateTyping() {
+      const typing = document.createElement("div");
+      typing.className = "bot";
+      typing.id = "typing";
+      typing.textContent = "EduBot is thinking ⋯";
+      messages.appendChild(typing);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function removeTyping() {
+      const typing = document.getElementById("typing");
+      if (typing) typing.remove();
+    }
+  });
+</script>
+
 </body>
 </html>

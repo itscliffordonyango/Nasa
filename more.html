@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NASA Educational Explorer</title>
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(to bottom, #0b0c10, #1f2833);
+        color: #fff;
+        overflow-x: hidden;
+      }
+
+      header {
+        background: #0b3d91;
+        padding: 20px;
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0;
+        color: #fff;
+      }
+
+      #apod-container {
+        text-align: center;
+        margin: 30px auto;
+        max-width: 800px;
+      }
+
+      #apod-image,
+      iframe {
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      }
+
+      #apod-title {
+        font-size: 1.8rem;
+        margin-top: 15px;
+      }
+
+      #apod-explanation {
+        margin-top: 10px;
+        line-height: 1.6;
+      }
+
+      #apod-info {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: #ccc;
+      }
+
+      /* Floating Chatbot Icon */
+      #chatbot-icon {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 70px;
+        height: 70px;
+        background-color: #0b3d91;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s ease;
+        z-index: 1000;
+      }
+
+      #chatbot-icon:hover {
+        background-color: #1f5fe0;
+        transform: scale(1.1);
+      }
+
+      /* Chatbot Container */
+      #chatbot-container {
+        display: none;
+        flex-direction: column;
+        position: fixed;
+        bottom: 110px;
+        right: 30px;
+        width: 350px;
+        height: 450px;
+        background-color: #16213e;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        z-index: 999;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      #chatbot-messages {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .bot,
+      .user {
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 20px;
+        animation: bubble 0.3s ease-in-out;
+      }
+
+      .bot {
+        background-color: #0b3d91;
+        align-self: flex-start;
+      }
+
+      .user {
+        background-color: #45a29e;
+        align-self: flex-end;
+      }
+
+      @keyframes bubble {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      #chatbot-input-container {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #0b3d91;
+        background-color: #1f2833;
+      }
+
+      #chatbot-input {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 20px;
+        outline: none;
+        background-color: #0b0c10;
+        color: #fff;
+      }
+
+      #chatbot-send {
+        background-color: #0b3d91;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        margin-left: 8px;
+        cursor: pointer;
+        color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h1>NASA Educational Explorer</h1>
+    </header>
+
+    <div id="apod-container">
+      <h2 id="apod-title"></h2>
+      <img id="apod-image" alt="Astronomy Picture of the Day" />
+      <p id="apod-explanation"></p>
+      <p id="apod-info"></p>
+    </div>
+
+    <!-- Floating Chatbot -->
+    <div id="chatbot-icon">💬</div>
+
+    <div id="chatbot-container">
+      <div id="chatbot-messages"></div>
+      <div id="chatbot-input-container">
+        <input type="text" id="chatbot-input" placeholder="Ask about space..." />
+        <button id="chatbot-send">➤</button>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const icon = document.getElementById("chatbot-icon");
+        const container = document.getElementById("chatbot-container");
+        const input = document.getElementById("chatbot-input");
+        const send = document.getElementById("chatbot-send");
+        const messages = document.getElementById("chatbot-messages");
+
+        let apodData = {};
+
+        // Toggle chatbot visibility
+        icon.addEventListener("click", () => {
+          container.style.display =
+            container.style.display === "flex" ? "none" : "flex";
+        });
+
+        // Fetch NASA APOD
+        fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY")
+          .then((res) => res.json())
+          .then((data) => {
+            apodData = data;
+            displayAPOD(data);
+            appendMessage("bot", "👋 Hi, I'm EduBot! Ask me about today's NASA picture or any space topic!");
+          })
+          .catch((err) => console.error("NASA API error:", err));
+
+        function displayAPOD(data) {
+          document.getElementById("apod-title").textContent = data.title;
+          if (data.media_type === "image") {
+            document.getElementById("apod-image").src = data.url;
+          } else {
+            document.getElementById("apod-image").remove();
+            const video = document.createElement("iframe");
+            video.src = data.url;
+            video.width = "100%";
+            video.height = "400";
+            video.allowFullscreen = true;
+            document.getElementById("apod-container").appendChild(video);
+          }
+          document.getElementById("apod-explanation").textContent =
+            data.explanation;
+          document.getElementById(
+            "apod-info"
+          ).textContent = `📅 Date: ${data.date} ${
+            data.copyright ? "| © " + data.copyright : ""
+          }`;
+        }
+
+        // Chat handling
+        send.addEventListener("click", handleMessage);
+        input.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleMessage();
+        });
+
+        function handleMessage() {
+          const userText = input.value.trim();
+          if (!userText) return;
+          appendMessage("user", userText);
+          input.value = "";
+          generateResponse(userText);
+        }
+
+        async function generateResponse(userText) {
+          simulateTyping();
+          let response = await queryGemini(userText);
+
+          if (!response || response.trim() === "") {
+            response = await fetchDuckDuckGo(userText);
+          }
+
+          removeTyping();
+          appendMessage("bot", response);
+        }
+
+        // Gemini API integration (replace placeholder key)
+        async function queryGemini(prompt) {
+          const GEMINI_KEY = "YOUR_GEMINI_KEY_HERE"; // Replace with your Gemini key
+          try {
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [{ role: "user", parts: [{ text: prompt }] }],
+                }),
+              }
+            );
+            const data = await res.json();
+            return (
+              data.candidates?.[0]?.content?.parts?.[0]?.text ||
+              "I'm not sure about that — try rephrasing your question!"
+            );
+          } catch (e) {
+            return "🌍 Network error. I’ll try a web search instead.";
+          }
+        }
+
+        // Web search fallback
+        async function fetchDuckDuckGo(query) {
+          try {
+            const res = await fetch(
+              `https://api.duckduckgo.com/?q=${encodeURIComponent(
+                query
+              )}&format=json`
+            );
+            const data = await res.json();
+            return (
+              data.AbstractText ||
+              "I couldn’t find that info right now. Try rephrasing your question."
+            );
+          } catch (e) {
+            return "❌ Connection issue. Please try again.";
+          }
+        }
+
+        // Chat visuals
+        function appendMessage(sender, text) {
+          const div = document.createElement("div");
+          div.className = sender;
+          div.textContent = text;
+          messages.appendChild(div);
+          messages.scrollTop = messages.scrollHeight;
+        }
+
+        function simulateTyping() {
+          const typing = document.createElement("div");
+          typing.className = "bot";
+          typing.id = "typing";
+          typing.textContent = "⋯";
+          messages.appendChild(typing);
+          messages.scrollTop = messages.scrollHeight;
+        }
+
+        function removeTyping() {
+          const typing = document.getElementById("typing");
+          if (typing) typing.remove();
+        }
+      });
+    </script>
+  </body>
+</html>

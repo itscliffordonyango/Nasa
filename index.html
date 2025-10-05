@@ -1,3 +1,5 @@
+index.html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,17 +13,16 @@
 
   <style>
     #bg-video {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -1;
-  opacity: 0.6; /* Dim slightly for readability */
-}
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      opacity: 0.6;
+    }
 
-    /* small customizations */
     .glass { background: rgba(255,255,255,0.04); border: 3px solid rgba(255, 255, 255, 0.06); }
     .apod-media { max-height: 60vh; object-fit: cover; border-radius: 0.75rem; }
   </style>
@@ -45,9 +46,9 @@
 
   <main class="max-w-6xl mx-auto px-4 pb-20">
     <video autoplay muted loop id="bg-video">
-  <source src="./img/istockphoto-1270215944-640_adpp_is.mp4" type="video/mp4">
-  Your browser does not support HTML5 video.
-</video>
+      <source src="./img/istockphoto-1270215944-640_adpp_is.mp4" type="video/mp4">
+      Your browser does not support HTML5 video.
+    </video>
 
     <section class="grid md:grid-cols-3 gap-6 items-start">
       <!-- Controls -->
@@ -69,6 +70,11 @@
           <button id="learnBtn" class="flex-1 px-4 py-2 rounded-md bg-sky-600 hover:bg-sky-700">Learn</button>
           <button id="openSameBtn" class="px-4 py-2 rounded-md border border-slate-600">Open</button>
         </div>
+
+        <div class="mt-4">
+          <button id="speakBtn" class="w-full px-4 py-2 rounded-md bg-green-600 hover:bg-green-700">🔊 Read Explanation</button>
+          <button id="stopSpeakBtn" class="w-full mt-2 px-4 py-2 rounded-md bg-red-600 hover:bg-red-700">🛑 Stop Reading</button>
+        </div>
       </div>
 
       <!-- Media preview -->
@@ -87,33 +93,33 @@
 
   <footer class="mt-auto py-8">
     <div class="max-w-6xl mx-auto px-4 text-slate-500 text-sm">
-      © SpaceScholar — demo. Replace <code>NASA_API_KEY</code> in the source with your own key.
+      © SpaceScholar — demo. 
     </div>
   </footer>
 
   <script>
     // ---------- CONFIG ----------
-    const NASA_API_KEY = "apIjpe3XDA1VOqgQ0KC2RTYmqz6T1pb0knrDaLay"; // <-- Replace with your key
+    const NASA_API_KEY = "KsHi59MzcNF0ahRnjGEQAxcQP92yfGQJdpchdTC4"; // ⚠️ Replace with your real NASA key
     // ----------------------------
 
-    // DOM
+    // DOM Elements
     const dateInput = document.getElementById('dateInput');
     const fetchBtn = document.getElementById('fetchBtn');
     const randomBtn = document.getElementById('randomBtn');
     const todayBtn = document.getElementById('todayBtn');
     const learnBtn = document.getElementById('learnBtn');
     const openSameBtn = document.getElementById('openSameBtn');
+    const speakBtn = document.getElementById('speakBtn');
+    const stopSpeakBtn = document.getElementById('stopSpeakBtn');
 
     const titlePreview = document.getElementById('titlePreview');
     const datePreview = document.getElementById('datePreview');
     const explanationPreview = document.getElementById('explanationPreview');
     const mediaWrapper = document.getElementById('mediaWrapper');
 
-    // set max date to today
     const todayISO = new Date().toISOString().slice(0,10);
     dateInput.max = todayISO;
 
-    // small util
     function showLoading(text = 'Loading…') {
       mediaWrapper.innerHTML = `<div class="text-slate-400">${text}</div>`;
       titlePreview.textContent = 'Astronomy Picture of the Day';
@@ -126,44 +132,64 @@
       explanationPreview.textContent = '';
     }
 
-    async function fetchAPOD(date) {
+    // ---- Fetch APOD ----
+    async function fetchAPOD(date, isToday = false) {
       showLoading('Fetching APOD…');
       try {
-        let url = `https://api.nasa.gov/planetary/apod?api_key=${encodeURIComponent(NASA_API_KEY)}`;
-        if (date) url += `&date=${encodeURIComponent(date)}`;
+        let url = `https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}`;
+        if (date) url += `&date=${date}`;
 
         const res = await fetch(url);
-        if (!res.ok) throw new Error(`NASA API ${res.status}`);
+        if (!res.ok) throw new Error("No APOD found for this date.");
         const data = await res.json();
 
-        // show
+        // Show APOD
         titlePreview.textContent = data.title || 'APOD';
         datePreview.textContent = data.date ? new Date(data.date).toLocaleDateString() : '';
         explanationPreview.textContent = data.explanation || '';
 
         if (data.media_type === 'video') {
-          // convert watch?v= -> embed/ if youtube
-          let src = data.url;
-          if (src.includes('watch?v=')) src = src.replace('watch?v=', 'embed/');
-          mediaWrapper.innerHTML = `
-            <iframe src="${src}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>
-          `;
+          let src = data.url.includes('watch?v=') ? data.url.replace('watch?v=', 'embed/') : data.url;
+          mediaWrapper.innerHTML = `<iframe src="${src}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
         } else {
           const imgSrc = data.hdurl || data.url || '';
-          mediaWrapper.innerHTML = `
-            <img id="previewImg" class="apod-media w-full h-full rounded-lg" src="${imgSrc}" alt="${(data.title||'apod')}" />
-          `;
+          mediaWrapper.innerHTML = `<img id="previewImg" class="apod-media w-full h-full rounded-lg" src="${imgSrc}" alt="${data.title || 'apod'}" />`;
         }
 
-        // remember the last fetched metadata on the client temporarily
         window._lastAPOD = data;
       } catch (err) {
-        console.error(err);
-        showError(err.message || 'Failed to fetch APOD.');
+        console.warn("APOD fetch error:", err.message);
+        if (isToday) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          fetchAPOD(yesterday.toISOString().slice(0,10), false);
+        } else {
+          showError(`No APOD available for ${date}. Please try another date.`);
+        }
       }
     }
 
-    // events
+    // Text-to-Speech
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) {
+        alert("Sorry, your browser doesn't support speech synthesis.");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function stopSpeaking() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    // Events
     fetchBtn.addEventListener('click', () => {
       const date = dateInput.value.trim();
       if (!date) { alert('Choose a date first'); return; }
@@ -172,62 +198,52 @@
 
     todayBtn.addEventListener('click', () => {
       dateInput.value = todayISO;
-      fetchAPOD(todayISO);
+      fetchAPOD(todayISO, true);
     });
 
     randomBtn.addEventListener('click', async () => {
       showLoading('Fetching random APOD…');
       try {
-        // NASA supports count param
-        const url = `https://api.nasa.gov/planetary/apod?api_key=${encodeURIComponent(NASA_API_KEY)}&count=1`;
+        const url = `https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}&count=1`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error(`NASA API ${res.status}`);
+        if (!res.ok) throw new Error("Failed to fetch random APOD.");
         const arr = await res.json();
         if (Array.isArray(arr) && arr.length) {
           const d = arr[0];
           dateInput.value = d.date;
-          // show same data
-          titlePreview.textContent = d.title || 'APOD';
-          datePreview.textContent = d.date ? new Date(d.date).toLocaleDateString() : '';
-          explanationPreview.textContent = d.explanation || '';
-          if (d.media_type === 'video') {
-            let src = d.url;
-            if (src.includes('watch?v=')) src = src.replace('watch?v=', 'embed/');
-            mediaWrapper.innerHTML = `<iframe src="${src}" class="w-full h-full rounded-lg" frameborder="0" allowfullscreen></iframe>`;
-          } else {
-            const imgSrc = d.hdurl || d.url || '';
-            mediaWrapper.innerHTML = `<img id="previewImg" class="apod-media w-full h-full rounded-lg" src="${imgSrc}" alt="${(d.title||'apod')}" />`;
-          }
-          window._lastAPOD = d;
+          fetchAPOD(d.date);
         } else {
-          showError('No random image returned.');
+          showError("No random image returned.");
         }
       } catch (err) {
-        console.error(err);
-        showError(err.message || 'Failed to fetch random APOD.');
+        showError(err.message);
       }
     });
 
-    // Learn: open edu.html?date=...
     learnBtn.addEventListener('click', () => {
       const selectedDate = dateInput.value;
       if (!selectedDate) { alert('Select a date first'); return; }
       window.location.href = `edu.html?date=${encodeURIComponent(selectedDate)}`;
     });
 
-    // Open in same page (anchor)
     openSameBtn.addEventListener('click', () => {
       const selectedDate = dateInput.value;
       if (!selectedDate) { alert('Select a date first'); return; }
-      // Load in-place (same as fetch)
       fetchAPOD(selectedDate);
     });
 
-    // Attempt initial load: today's APOD
+    speakBtn.addEventListener('click', () => {
+      const text = explanationPreview.textContent.trim();
+      if (!text) { alert('No explanation to read.'); return; }
+      speakText(text);
+    });
+
+    stopSpeakBtn.addEventListener('click', stopSpeaking);
+
+    // Initial setup
+    // Fetch today's APOD
     (function init() {
       dateInput.value = todayISO;
-      // optional: autoload today's APOD
-      // fetchAPOD(todayISO);
     })();
   </script>
 </body>
