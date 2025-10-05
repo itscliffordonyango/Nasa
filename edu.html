@@ -7,6 +7,7 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="img/mdb-favicon.ico" />
+  <link rel="stylesheet" href="/css/mobile.css">
   <style>
     #bg-video {
   position: fixed;
@@ -762,6 +763,103 @@
     }
   });
 </script>
+
+<!-- mobile view -->
+ <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const chatbot = document.getElementById("chatbot-container");
+  const chatbotIcon = document.getElementById("chatbot-icon");
+  const apodImage = document.getElementById("apod-image");
+  const apodTitle = document.getElementById("apod-title");
+  const apodExplanation = document.getElementById("apod-explanation");
+
+  // --- 1. Handle responsiveness dynamically ---
+  function adjustLayout() {
+    const width = window.innerWidth;
+
+    if (width <= 480) {
+      chatbot.style.width = "95%";
+      chatbot.style.right = "2.5%";
+      chatbot.style.bottom = "100px";
+      apodImage.style.width = "95%";
+      apodTitle.style.fontSize = "1.1rem";
+      apodExplanation.style.fontSize = "0.9rem";
+    } else if (width <= 768) {
+      chatbot.style.width = "90%";
+      chatbot.style.right = "5%";
+      chatbot.style.bottom = "100px";
+      apodImage.style.width = "90%";
+      apodTitle.style.fontSize = "1.3rem";
+      apodExplanation.style.fontSize = "1rem";
+    } else {
+      chatbot.style.width = "340px";
+      chatbot.style.right = "20px";
+      chatbot.style.bottom = "90px";
+      apodImage.style.width = "600px";
+      apodTitle.style.fontSize = "1.5rem";
+      apodExplanation.style.fontSize = "1rem";
+    }
+  }
+
+  // Call initially and on resize
+  adjustLayout();
+  window.addEventListener("resize", adjustLayout);
+
+  // --- 2. Add keyframe-like JS animations ---
+  function animateElement(element, animation, duration = 500) {
+    element.style.transition = `all ${duration}ms ease`;
+    if (animation === "fadeIn") {
+      element.style.opacity = 0;
+      element.style.transform = "translateY(8px)";
+      requestAnimationFrame(() => {
+        element.style.opacity = 1;
+        element.style.transform = "translateY(0)";
+      });
+    } else if (animation === "slideUp") {
+      element.style.opacity = 0;
+      element.style.transform = "translateY(50px)";
+      requestAnimationFrame(() => {
+        element.style.opacity = 1;
+        element.style.transform = "translateY(0)";
+      });
+    }
+  }
+
+  // --- 3. Floating chatbot icon ---
+  function floatIcon() {
+    let direction = 1;
+    let position = 0;
+    setInterval(() => {
+      position += direction * 0.6;
+      chatbotIcon.style.transform = `translateY(${position}px)`;
+      if (position >= 8 || position <= -8) direction *= -1;
+    }, 30);
+  }
+  floatIcon();
+
+  // --- 4. Animate chatbot when opening ---
+  const icon = document.getElementById("chatbot-icon");
+  icon.addEventListener("click", () => {
+    const isVisible = chatbot.style.display === "flex";
+    chatbot.style.display = isVisible ? "none" : "flex";
+    if (!isVisible) animateElement(chatbot, "slideUp", 500);
+  });
+
+  // --- 5. Animate messages ---
+  const messages = document.getElementById("chatbot-messages");
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.classList?.contains("bot") || node.classList?.contains("user")) {
+          animateElement(node, "fadeIn", 300);
+        }
+      });
+    });
+  });
+  observer.observe(messages, { childList: true });
+});
+</script>
+
 
 </body>
 </html>
